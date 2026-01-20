@@ -27,13 +27,15 @@ public class MembershipFlowTest {
     @Test
     void testFullMembershipFlow() {
         // 1. Create User
-        User user = new User(null, "Test User", "test@test.com", 0, 0.0);
+        User user = new User(null, "Test User", "test@test.com", 0, 0.0, null);
         user = userRepository.save(user);
         Long userId = user.getId();
 
         // 2. Check initial plans (Should be Silver)
         List<Plan> plans = membershipService.getAvailablePlans(userId);
         Assertions.assertFalse(plans.isEmpty());
+        // Since user is Silver, and minSpent <= Silver (0), they see Silver.
+        // Gold has higher minSpent, so they shouldn't see Gold.
         Assertions.assertTrue(plans.stream().allMatch(p -> p.getTier().getName().equals("Silver")));
 
         // 3. Subscribe to Silver Monthly
@@ -44,29 +46,23 @@ public class MembershipFlowTest {
         Assertions.assertEquals("Silver", sub.getPlan().getTier().getName());
 
         // 4. Simulate Orders to reach Gold (Needs 10 orders, $500)
-        // We update entity directly for test speed
         user.setTotalOrders(15);
         user.setTotalSpent(600.0);
         userRepository.save(user);
 
-        // 5. Check plans again (Should see Gold plans now)
-        // NOTE: My implementation implementation filters plans.
-        // If I am Gold eligible, do I see Silver AND Gold?
-        // My implementation: `return plans matching the eligible tier`.
-        // logic: `filter(p -> p.getTier().getId().equals(eligibleTier.getId()))`
-        // So I will see ONLY Gold. This adheres to "Subscribe to a plan (plan + tier)"
-        // where tier is determined by criteria.
-        // If users can *choose* to stay on Silver, my logic is too strict.
-        // But for this assignment, simpler is often better to prove the "Criteria"
-        // logic works.
-        // Let's verify I see Gold.
+        // 5. Check plans again (Should see Gold plans now, AND Silver plans)
         List<Plan> goldPlans = membershipService.getAvailablePlans(userId);
+        // Verify we can see Gold
         Assertions.assertTrue(goldPlans.stream().anyMatch(p -> p.getTier().getName().equals("Gold")));
-        // My logic returns *only* eligible tier. So it should be Gold.
-        Assertions.assertEquals("Gold", goldPlans.get(0).getTier().getName()); // assuming first is Gold
+        // Verify we can still see Silver (downgrade option)
+        Assertions.assertTrue(goldPlans.stream().anyMatch(p -> p.getTier().getName().equals("Silver")));
 
         // 6. Upgrade to Gold
-        Plan goldPlan = goldPlans.stream().filter(p -> p.getDuration() == MembershipDuration.MONTHLY).findFirst().get();
+        Plan goldPlan = goldPlans.stream()
+                .filter(p -> p.getTier().getName().equals("Gold") && p.getDuration() == MembershipDuration.MONTHLY)
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Gold Monthly Plan not found"));
+
         Subscription upgradedSub = membershipService.subscribe(userId, goldPlan.getId());
 
         Assertions.assertEquals("Gold", upgradedSub.getPlan().getTier().getName());

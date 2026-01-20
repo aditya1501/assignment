@@ -31,6 +31,7 @@ public class Tier {
     // Qualification Criteria
     private int minOrderCount;
     private double minTotalSpent;
+    private String requiredCohort; // e.g. "STUDENT", "VIP", or null/empty for all
 
     // Configurable Benefits (e.g., "DISCOUNT" -> "5%", "DELIVERY" -> "FREE")
     @ElementCollection(fetch = FetchType.EAGER)

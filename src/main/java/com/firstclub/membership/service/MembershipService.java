@@ -42,12 +42,11 @@ public class MembershipService {
         // Determine eligible tier
         Tier eligibleTier = calculateEligibleTier(user);
 
-        // For now, return plans matching the eligible tier.
-        // Logic: A user qualifies for a Tier. They can subscribe to any Duration of
-        // that Tier.
-        // They should not see Gold plans if they are only Silver eligible.
+        // Logic: A user qualifies for a Tier.
+        // We return plans for the eligible tier AND any lower tiers (Downgrade
+        // options).
         return planRepository.findAll().stream()
-                .filter(p -> p.getTier().getId().equals(eligibleTier.getId()))
+                .filter(p -> p.getTier().getMinTotalSpent() <= eligibleTier.getMinTotalSpent())
                 .collect(Collectors.toList());
     }
 
@@ -152,8 +151,13 @@ public class MembershipService {
             // Usually criteria are thresholds.
             // Let's assume "OR" for flexibility, or "AND". Let's do AND for stricter, or OR
             // for user friendly.
-            // Let's match if TotalOrders >= t.min AND TotalSpent >= t.minSpent
-            if (user.getTotalOrders() >= t.getMinOrderCount() && user.getTotalSpent() >= t.getMinTotalSpent()) {
+            // Criteria check: Stats + Cohort
+            boolean statsMet = user.getTotalOrders() >= t.getMinOrderCount()
+                    && user.getTotalSpent() >= t.getMinTotalSpent();
+            boolean cohortMet = t.getRequiredCohort() == null || t.getRequiredCohort().isEmpty()
+                    || t.getRequiredCohort().equalsIgnoreCase(user.getCohort());
+
+            if (statsMet && cohortMet) {
                 if (bestTier == null || isTierHigher(t, bestTier)) {
                     bestTier = t;
                 }

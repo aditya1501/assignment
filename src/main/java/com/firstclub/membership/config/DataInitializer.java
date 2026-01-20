@@ -22,9 +22,11 @@ public class DataInitializer {
     CommandLineRunner initDatabase(TierRepository tierRepo, PlanRepository planRepo, UserRepository userRepo) {
         return args -> {
             // Create Tiers
-            Tier silver = new Tier(null, "Silver", 0, 0.0, Map.of("DISCOUNT", "5%", "DELIVERY", "STANDARD"));
-            Tier gold = new Tier(null, "Gold", 10, 500.0, Map.of("DISCOUNT", "10%", "DELIVERY", "FREE_ON_ELIGIBLE"));
-            Tier platinum = new Tier(null, "Platinum", 50, 2000.0,
+            // Create Tiers
+            Tier silver = new Tier(null, "Silver", 0, 0.0, null, Map.of("DISCOUNT", "5%", "DELIVERY", "STANDARD"));
+            Tier gold = new Tier(null, "Gold", 10, 500.0, null,
+                    Map.of("DISCOUNT", "10%", "DELIVERY", "FREE_ON_ELIGIBLE"));
+            Tier platinum = new Tier(null, "Platinum", 50, 2000.0, null,
                     Map.of("DISCOUNT", "20%", "DELIVERY", "FREE_ALL", "SUPPORT", "PRIORITY"));
 
             tierRepo.save(silver);
@@ -46,7 +48,7 @@ public class DataInitializer {
             planRepo.save(new Plan(null, platinum, MembershipDuration.YEARLY, new BigDecimal("499.99")));
 
             // Create Demo User
-            User user = new User(null, "John Doe", "john@example.com", 0, 0.0);
+            User user = new User(null, "John Doe", "john@example.com", 0, 0.0, null);
             userRepo.save(user); // ID 1
 
             System.out.println("Database initialized with Tiers, Plans, and Demo User.");

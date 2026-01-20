@@ -25,4 +25,5 @@ public class User {
     // Criteria stats
     private int totalOrders;
     private double totalSpent;
+    private String cohort; // e.g. "STUDENT"
 }
