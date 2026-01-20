@@ -5,7 +5,7 @@ This flow shows how a User's stats determine their eligible Tier and which Plans
 
 ```mermaid
 flowchart TD
-    User((User)) -->|1. Request Available Plans| API[API: /plans/{userId}]
+    User((User)) -->|1. Request Available Plans| API["API: /plans/{userId}"]
     API -->|Fetch User Stats| DB[(Database)]
     DB -->|Return Orders, Spend, Cohort| Service[Membership Service]
     
